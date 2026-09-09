@@ -43,7 +43,9 @@ describe("sign-in", () => {
   });
 
   it("accepts the break-glass password account and rejects a wrong password", async () => {
-    await expect(postPasswordSignIn("admin@physioclinic.local", "break-glass")).resolves.toMatchObject({
+    await expect(
+      postPasswordSignIn("admin@physioclinic.local", "break-glass"),
+    ).resolves.toMatchObject({
       user: { role: "doctor_admin" },
     });
     await expect(postPasswordSignIn("admin@physioclinic.local", "wrong")).rejects.toMatchObject({
