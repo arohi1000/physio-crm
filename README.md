@@ -13,9 +13,10 @@ Repo 2 of 3. See `../Clinic_Demo/physio-crm-PLAN.md` for the full build plan and
 `../Clinic_Demo/EXECUTION-PLAN.md` §4 for the code standards this repo is
 reviewed against.
 
-**Status: Milestone 0 (Foundations).** There is no authentication, no calendar
-and no patient management yet — every route under `app/(app)/` is a placeholder
-that names what will live there and which milestone builds it.
+**Status: Milestone 1 (Auth and shell).** Sign-in, session handling and
+role-aware navigation are built. There is still no calendar and no patient
+management — every route under `app/(app)/` is a placeholder that names what
+will live there and which milestone builds it.
 
 ---
 
@@ -66,8 +67,9 @@ build on every push and pull request.
 `lib/api/client.ts` exports `apiRequest`, the only place in the app that should
 call `fetch` against `physio-api`. It turns every failure — unreachable API,
 non-2xx status, malformed JSON — into an `ApiError`, so screens render one error
-state rather than guarding raw `fetch` rejections. Milestone 1 adds the access
-token and the silent-refresh retry inside it.
+state rather than guarding raw `fetch` rejections. It is stateless: the access
+token and the silent-refresh retry live one layer up, in
+`lib/auth/authorizedRequester.ts`.
 
 The base URL comes from `NEXT_PUBLIC_API_BASE_URL`; see `.env.example` for every
 environment variable this app reads.
@@ -84,6 +86,38 @@ so today this script exits non-zero with an explanation rather than writing an
 empty file. Until it can run, the few types the CRM needs are hand-written and
 marked as such — `lib/api/health.ts` is the only one.
 
+### Signing in
+
+The session lives in `lib/auth/` and `components/auth/`:
+
+| Piece                     | What it owns                                                        |
+| ------------------------- | ------------------------------------------------------------------- |
+| `AccessTokenHolder.ts`    | The access token, in a private field — never any browser storage    |
+| `authRequests.ts`         | One function per endpoint in the auth contract, and nothing else    |
+| `authorizedRequester.ts`  | Bearer token, one silent refresh per 401, then one retry            |
+| `googleSignIn.ts`         | The only module that knows how the Google button produces a session |
+| `SessionProvider.tsx`     | Session state, silent restore on load, sign-out, idle timeout       |
+| `useIdleTimeout.ts`       | 30 minutes idle, warned in the last 2                               |
+| `app/(app)/navigation.ts` | Which nav sections and routes each role sees                        |
+
+Rules this milestone is held to:
+
+- **No token, and no patient or user data, in `localStorage` or
+  `sessionStorage`** (TRD §7.3). The refresh token is an httpOnly cookie the
+  browser holds and JavaScript cannot read; the access token is in memory and is
+  gone when the tab closes. Every load therefore starts with a silent
+  `POST /auth/refresh` and shows a loading state, not a login flash.
+- **Client-side role gating is UX, not security.** Hidden links and the
+  redirect off a doctor-only route are a courtesy to staff; the API's guards are
+  the boundary, and the RBAC audit in Phase 7 checks the API, not the menu.
+
+**Google is not wired up yet.** There is no OAuth client, so the button calls
+the API's `POST /auth/dev-login` bypass (EXECUTION-PLAN.md decision B6 — tracked
+debt, must be replaced before any deploy). Swapping in the real thing touches
+`lib/auth/googleSignIn.ts` and nothing else. Alongside it, a development-only
+panel signs in as either seeded role so role-specific UI can be exercised; it is
+gated on `NODE_ENV !== "production"` and is absent from a production build.
+
 ### Mocking the API
 
 Mock Service Worker lets CRM screens be built before the matching endpoints
@@ -98,6 +132,22 @@ milestone that ships the real endpoint.
 - **Tests:** `mocks/server.ts` exports a configured `setupServer`, which
   `vitest.setup.ts` starts and stops around every run. `npm test` runs Vitest
   once; unmocked requests fail the test rather than reaching the network.
+
+The mock auth accounts (`mocks/authHandlers.ts`) mirror the allow-list the API
+will hold:
+
+| Email                       | Role           | Signs in?                     |
+| --------------------------- | -------------- | ----------------------------- |
+| `doctor@physio.local`       | `doctor_admin` | Yes                           |
+| `staff@physio.local`        | `staff`        | Yes                           |
+| `admin@physio.local`        | `doctor_admin` | Password only (`break-glass`) |
+| `former.staff@physio.local` | `staff`        | No — deactivated              |
+| anything else               | —              | No — not provisioned          |
+
+`mocks/mockRefreshCookie.ts` stands in for the API's httpOnly refresh cookie: a
+service worker cannot set one, so the mock keeps a readable cookie holding an
+opaque account id. **No application code reads it** — only the handlers — and it
+exists so a reload still restores a session while mocking.
 
 ### `/dev/health`
 
@@ -132,7 +182,8 @@ chrome belongs to `physio-website` and must not appear here.
 | `line`         | `#DBDFD3` | `#303427` |
 | `sage`         | `#4B6852` | `#7FAE8B` |
 | `sage-deep`    | `#33473A` | `#9FC9AA` |
-| `clay`         | `#AD6E31` | `#DBA05C` |
+| `clay`         | `#8A5522` | `#DBA05C` |
+| `scrim`        | 45% ink   | 65% black |
 
 This project uses Tailwind v4, whose default configuration is CSS-first. A
 `tailwind.config.ts` is still used — loaded by the `@config` directive at the top
@@ -152,27 +203,31 @@ app/
   layout.tsx                    root layout, fonts, MSW bootstrap
   globals.css                   design tokens + Tailwind entry
   robots.ts                     disallow everything
-  login/                        sign-in (Milestone 1)
+  login/                        sign-in
   dev/health/                   throwaway API connectivity check
   (app)/                        the signed-in shell
-    layout.tsx                  sidebar + top bar; role-aware from Milestone 1
-    navigation.ts               nav sections; filtered by role from Milestone 1
+    layout.tsx                  hands the group to AppShell
+    navigation.ts               nav sections and route access, per role
     page.tsx                    today dashboard
     calendar/ appointments/ patients/ patients/[id]/ follow-ups/
     messages/ reviews/ coupons/ activity/
     content/blog/ content/blog/[id]/ content/about/ content/services/
     settings/hours/ settings/templates/ settings/users/
 components/
+  AppShell.tsx                  the signed-in chrome and the gate in front of it
   AppSidebar.tsx                navigation with active-route state
+  Button.tsx                    the one button, primary and quiet
+  LoadingScreen.tsx             shown while the session is being restored
   MockApiProvider.tsx           starts MSW when mocking is enabled
   PlaceholderPage.tsx           the "not built yet" shell used by every stub
+  auth/                         sign-in panel, session provider, idle warning
   data-table/                   sortable, searchable, paginated table (M2)
   calendar/                     day / week / month views (M2)
   forms/                        shared form controls (M2+)
   print/                        receipt + prescription print layouts (M3)
 lib/
   api/                          typed client, config, generated types
-  auth/                         session, refresh, role helpers (M1)
+  auth/                         session, refresh, role helpers
 mocks/                          MSW handlers, browser worker, node server
 scripts/                        generate-api-types.mjs
 ```

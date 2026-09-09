@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SessionProvider } from "@/components/auth/SessionProvider";
 import { MockApiProvider } from "@/components/MockApiProvider";
 import "./globals.css";
 
@@ -16,7 +17,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
-        <MockApiProvider>{children}</MockApiProvider>
+        {/* Mocking starts first when it is on, so the session's silent refresh
+            on load is intercepted rather than racing the worker. */}
+        <MockApiProvider>
+          <SessionProvider>{children}</SessionProvider>
+        </MockApiProvider>
       </body>
     </html>
   );

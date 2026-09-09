@@ -25,6 +25,7 @@ const config: Config = {
           deep: "var(--sage-deep)",
         },
         clay: "var(--clay)",
+        scrim: "var(--scrim)",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

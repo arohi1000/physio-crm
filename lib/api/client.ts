@@ -7,26 +7,36 @@ export type ApiRequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   signal?: AbortSignal;
+  /** Held in memory by the session and passed per call; never read from storage. */
+  accessToken?: string;
 };
 
-const jsonHeaders: HeadersInit = {
-  Accept: "application/json",
-  "Content-Type": "application/json",
-};
+function buildHeaders(accessToken: string | undefined): HeadersInit {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  return headers;
+}
 
 /**
  * The single entry point for talking to `physio-api`. Every failure — offline
  * API, non-2xx status, malformed body — surfaces as an `ApiError`, so no caller
  * has to guard against a raw `fetch` rejection.
  *
- * Milestone 1 adds the access token and the silent-refresh retry here; nothing
- * else in the app should call `fetch` against the API directly.
+ * This function stays stateless. Authenticated screens go through
+ * `createAuthorizedRequest` (`lib/auth/authorizedRequester.ts`), which supplies
+ * the token and owns the silent-refresh retry; nothing else in the app should
+ * call `fetch` against the API directly.
  */
 export async function apiRequest<TResponse>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<TResponse> {
-  const { method = "GET", body, signal: callerSignal } = options;
+  const { method = "GET", body, signal: callerSignal, accessToken } = options;
 
   // Combined so a caller-supplied signal cannot silently drop the timeout: an
   // API that accepts the socket but never answers must not pin the caller in a
@@ -38,7 +48,7 @@ export async function apiRequest<TResponse>(
   try {
     response = await fetch(`${apiBaseUrl}${path}`, {
       method,
-      headers: jsonHeaders,
+      headers: buildHeaders(accessToken),
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
       cache: "no-store",
@@ -57,6 +67,12 @@ export async function apiRequest<TResponse>(
       `${method} ${path} failed with ${response.status} ${response.statusText}.`,
       response.status,
     );
+  }
+
+  // 204 is a documented success shape in the auth contract (logout), not a
+  // malformed body.
+  if (response.status === 204) {
+    return undefined as TResponse;
   }
 
   try {

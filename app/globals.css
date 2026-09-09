@@ -19,6 +19,9 @@
   /* Darkened from #ad6e31, which fell below WCAG AA (4.5:1) for normal text on
    * both --paper and --paper-raised. This value clears it on both. */
   --clay: #8a5522;
+  /* Dims the app behind a blocking dialog. Token rather than `bg-black/50` so
+   * the dark theme can be dimmed by its own amount. */
+  --scrim: rgb(30 36 30 / 45%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -33,6 +36,7 @@
     --sage: #7fae8b;
     --sage-deep: #9fc9aa;
     --clay: #dba05c;
+    --scrim: rgb(0 0 0 / 65%);
   }
 }
 

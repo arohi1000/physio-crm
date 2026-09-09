@@ -1,23 +1,26 @@
+import { dashboardPath } from "@/lib/auth/safeRedirectPath";
+import type { AuthRole } from "@/lib/auth/types";
+
 export type NavItem = {
-  href: string;
-  label: string;
+  readonly href: string;
+  readonly label: string;
 };
 
 export type NavSection = {
-  heading: string;
-  items: readonly NavItem[];
+  readonly heading: string;
+  readonly visibleTo: readonly AuthRole[];
+  readonly items: readonly NavItem[];
 };
 
-/**
- * Flat and role-blind for now. Milestone 1 filters these sections by role —
- * `doctor_admin` keeps everything, staff loses Coupons, Settings and Activity —
- * and the API guards remain the actual boundary.
- */
-export const navSections: readonly NavSection[] = [
+const everyone: readonly AuthRole[] = ["doctor_admin", "staff"];
+const doctorOnly: readonly AuthRole[] = ["doctor_admin"];
+
+const navSections: readonly NavSection[] = [
   {
     heading: "Daily",
+    visibleTo: everyone,
     items: [
-      { href: "/", label: "Today" },
+      { href: dashboardPath, label: "Today" },
       { href: "/calendar", label: "Calendar" },
       { href: "/appointments", label: "Appointments" },
       { href: "/patients", label: "Patients" },
@@ -27,6 +30,7 @@ export const navSections: readonly NavSection[] = [
   },
   {
     heading: "Content",
+    visibleTo: everyone,
     items: [
       { href: "/reviews", label: "Reviews" },
       { href: "/content/blog", label: "Blog" },
@@ -36,6 +40,7 @@ export const navSections: readonly NavSection[] = [
   },
   {
     heading: "Admin",
+    visibleTo: doctorOnly,
     items: [
       { href: "/coupons", label: "Coupons" },
       { href: "/settings/hours", label: "Working hours" },
@@ -45,3 +50,26 @@ export const navSections: readonly NavSection[] = [
     ],
   },
 ];
+
+/**
+ * Hiding a link a role cannot use is a courtesy, not a control: the API's guards
+ * are the actual boundary, and a staff account that types `/coupons` still gets
+ * a 403 from the endpoints that page calls.
+ */
+export function navSectionsForRole(role: AuthRole): readonly NavSection[] {
+  return navSections.filter((section) => section.visibleTo.includes(role));
+}
+
+/**
+ * Answers the same question for a URL somebody typed or bookmarked, from the
+ * same table, so a hidden link and a blocked route can never disagree. A path
+ * no section claims — a patient record, say — is allowed here and decided by
+ * the API, which is where the decision actually counts.
+ */
+export function isRouteVisibleToRole(pathname: string, role: AuthRole): boolean {
+  const owningSection = navSections.find((section) =>
+    section.items.some((item) => item.href !== dashboardPath && pathname.startsWith(item.href)),
+  );
+
+  return owningSection === undefined || owningSection.visibleTo.includes(role);
+}

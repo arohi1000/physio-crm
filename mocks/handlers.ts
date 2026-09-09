@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { apiBaseUrl } from "@/lib/api/config";
 import type { HealthResponse } from "@/lib/api/health";
+import { authHandlers } from "./authHandlers";
 
 /**
  * Stand-ins for endpoints the CRM needs before `physio-api` ships them. Each
@@ -13,4 +14,5 @@ export const handlers = [
       version: "mock",
     }),
   ),
+  ...authHandlers,
 ];

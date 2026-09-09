@@ -18,7 +18,7 @@ export function AppSidebar({ sections }: { sections: readonly NavSection[] }) {
   return (
     <nav
       aria-label="Main"
-      className="flex gap-1 overflow-x-auto p-2 lg:flex-col lg:gap-6 lg:overflow-x-visible lg:p-4"
+      className="flex gap-1 overflow-x-auto p-2 lg:flex-1 lg:flex-col lg:gap-6 lg:overflow-x-visible lg:overflow-y-auto lg:p-4"
     >
       {sections.map((section) => (
         <div key={section.heading} className="flex gap-1 lg:flex-col">
