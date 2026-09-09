@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@config "../tailwind.config.ts";
+
+/*
+ * Design tokens. The complete palette is declared on `:root` so every token has
+ * a value regardless of media-query support; the dark block only overrides
+ * values that already exist above it.
+ */
+:root {
+  color-scheme: light;
+
+  --paper: #f5f6f1;
+  --paper-raised: #ffffff;
+  --ink: #1e241e;
+  --ink-soft: #5b6156;
+  --line: #dbdfd3;
+  --sage: #4b6852;
+  --sage-deep: #33473a;
+  /* Darkened from #ad6e31, which fell below WCAG AA (4.5:1) for normal text on
+   * both --paper and --paper-raised. This value clears it on both. */
+  --clay: #8a5522;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --paper: #12140f;
+    --paper-raised: #1b1e16;
+    --ink: #eaebe2;
+    --ink-soft: #a7ac9c;
+    --line: #303427;
+    --sage: #7fae8b;
+    --sage-deep: #9fc9aa;
+    --clay: #dba05c;
+  }
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+}

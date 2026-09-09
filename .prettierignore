@@ -1,0 +1,5 @@
+.next/
+node_modules/
+lib/api/generated/
+public/mockServiceWorker.js
+package-lock.json
