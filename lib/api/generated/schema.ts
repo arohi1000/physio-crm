@@ -183,6 +183,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/patients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search patients by name, phone or email */
+        get: operations["PatientsController_search"];
+        put?: never;
+        /** Manual / walk-in add */
+        post: operations["PatientsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/patients/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Full patient history aggregate */
+        get: operations["PatientsController_getById"];
+        put?: never;
+        post?: never;
+        /** Soft delete a patient (doctor_admin only) */
+        delete: operations["PatientsController_delete"];
+        options?: never;
+        head?: never;
+        /** Update a patient */
+        patch: operations["PatientsController_update"];
+        trace?: never;
+    };
     "/api/v1/coupons/validate": {
         parameters: {
             query?: never;
@@ -355,6 +392,159 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/patients/{patientId}/follow-ups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Log a follow-up for a patient */
+        post: operations["FollowUpsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/follow-ups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The follow-up queue */
+        get: operations["FollowUpsController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/follow-ups/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update a follow-up: status, target date, purpose */
+        patch: operations["FollowUpsController_update"];
+        trace?: never;
+    };
+    "/api/v1/admin/patients/{patientId}/prescriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a prescription for a patient */
+        post: operations["PrescriptionsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prescriptions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Prescription detail */
+        get: operations["PrescriptionsController_getById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/prescriptions/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Short-lived signed URL for the prescription PDF */
+        get: operations["PrescriptionsController_getPdfUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/patients/{patientId}/receipts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Issue a receipt for a patient */
+        post: operations["ReceiptsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/receipts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Receipt detail */
+        get: operations["ReceiptsController_getById"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/receipts/{id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Short-lived signed URL for the receipt PDF */
+        get: operations["ReceiptsController_getPdfUrl"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -462,6 +652,8 @@ export interface components {
             workingHours: components["schemas"]["WeeklyWorkingHoursDto"];
             /** @example 0 */
             slotBufferMinutes: number;
+            /** @example 2 */
+            followUpReminderLeadDays: number;
         };
         UpdateClinicSettingsDto: {
             workingHours?: components["schemas"]["WeeklyWorkingHoursDto"];
@@ -485,6 +677,105 @@ export interface components {
             price: string;
             /** @example 45 */
             durationMinutes: number;
+        };
+        PatientListItemDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            phone: string;
+            email: string | null;
+            lastVisitAt: string | null;
+            nextAppointmentAt: string | null;
+            followUpDueAt: string | null;
+        };
+        PaginationMetaDto: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+        };
+        PaginatedPatientsDto: {
+            data: components["schemas"]["PatientListItemDto"][];
+            meta: components["schemas"]["PaginationMetaDto"];
+        };
+        CreatePatientDto: {
+            name: string;
+            phone: string;
+            email?: string | null;
+            /** @example 1988-04-12 */
+            dob?: string | null;
+            /** @enum {string|null} */
+            gender?: "female" | "male" | "other" | null;
+            notes?: string | null;
+            consentGiven?: boolean;
+        };
+        TimelineAppointmentItemDto: {
+            /** @enum {string} */
+            kind: "appointment";
+            /** Format: uuid */
+            id: string;
+            at: string;
+            status: string;
+            serviceName: string;
+            reference: string;
+        };
+        TimelineFollowUpItemDto: {
+            /** @enum {string} */
+            kind: "follow_up";
+            /** Format: uuid */
+            id: string;
+            at: string;
+            status: string;
+            purpose: string;
+            revisitTargetDate: string;
+        };
+        TimelinePrescriptionItemDto: {
+            /** @enum {string} */
+            kind: "prescription";
+            /** Format: uuid */
+            id: string;
+            at: string;
+            /** @example 3 medicines, 2 exercises */
+            summary: string;
+        };
+        TimelineReceiptItemDto: {
+            /** @enum {string} */
+            kind: "receipt";
+            /** Format: uuid */
+            id: string;
+            /** @example RCP-2026-0001 */
+            number: string;
+            at: string;
+            /** @example 1000.00 */
+            amount: string;
+            paymentMethod: string;
+        };
+        PatientDetailDto: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            phone: string;
+            email: string | null;
+            /** @example 1988-04-12 */
+            dob: string | null;
+            gender: string | null;
+            source: string;
+            notes: string | null;
+            consentGivenAt: string | null;
+            createdAt: string;
+            /** @description Newest-first. Do not re-sort or re-merge on the client. */
+            timeline: (components["schemas"]["TimelineAppointmentItemDto"] | components["schemas"]["TimelineFollowUpItemDto"] | components["schemas"]["TimelinePrescriptionItemDto"] | components["schemas"]["TimelineReceiptItemDto"])[];
+        };
+        UpdatePatientDto: {
+            name?: string;
+            phone?: string;
+            email?: string | null;
+            /** @example 1988-04-12 */
+            dob?: string | null;
+            /** @enum {string|null} */
+            gender?: "female" | "male" | "other" | null;
+            notes?: string | null;
+            consentGiven?: boolean;
         };
         ValidateCouponDto: {
             /** @example WELCOME10 */
@@ -682,12 +973,6 @@ export interface components {
             paymentStatus: string;
             bookingSource: string;
         };
-        PaginationMetaDto: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-        };
         PaginatedAdminAppointmentsDto: {
             data: components["schemas"]["AdminAppointmentListItemDto"][];
             meta: components["schemas"]["PaginationMetaDto"];
@@ -747,6 +1032,111 @@ export interface components {
         CancelAppointmentDto: {
             /** @example Doctor unwell, rescheduling on request */
             reason: string;
+        };
+        CreateFollowUpDto: {
+            /** @example Review shoulder mobility */
+            purpose: string;
+            /** @example 2026-10-02 */
+            revisitTargetDate: string;
+            /** Format: uuid */
+            appointmentId?: string | null;
+        };
+        FollowUpResponseDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            patientId: string;
+            /** Format: uuid */
+            appointmentId: string | null;
+            purpose: string;
+            /** @example 2026-10-02 */
+            revisitTargetDate: string;
+            reminderScheduledFor: string;
+            /** @enum {string} */
+            status: "scheduled" | "reminder_sent" | "rebooked" | "dismissed";
+            createdAt: string;
+        };
+        PaginatedFollowUpsDto: {
+            data: components["schemas"]["FollowUpResponseDto"][];
+            meta: components["schemas"]["PaginationMetaDto"];
+        };
+        UpdateFollowUpDto: {
+            /** @enum {string} */
+            status?: "scheduled" | "reminder_sent" | "rebooked" | "dismissed";
+            /** @example 2026-10-16 */
+            revisitTargetDate?: string;
+            purpose?: string;
+        };
+        PrescriptionMedicineDto: {
+            /** @example Ibuprofen */
+            name: string;
+            /** @example 400mg */
+            dose: string;
+            /** @example twice daily */
+            frequency: string;
+            /** @example 5 */
+            durationDays: number;
+        };
+        PrescriptionExerciseDto: {
+            /** @example Scapular retraction */
+            name: string;
+            /** @example 3 */
+            sets: number;
+            /** @example 12 */
+            reps: number;
+            notes?: string | null;
+        };
+        CreatePrescriptionDto: {
+            medicines: components["schemas"]["PrescriptionMedicineDto"][];
+            exercises: components["schemas"]["PrescriptionExerciseDto"][];
+            /** @example Ice for 10 minutes after each session. */
+            instructions: string;
+            /** Format: uuid */
+            appointmentId?: string | null;
+        };
+        PrescriptionDetailDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            patientId: string;
+            /** Format: uuid */
+            appointmentId: string | null;
+            medicines: components["schemas"]["PrescriptionMedicineDto"][];
+            exercises: components["schemas"]["PrescriptionExerciseDto"][];
+            instructions: string;
+            issuedAt: string;
+        };
+        SignedFileUrlResponseDto: {
+            url: string;
+            expiresAt: string;
+        };
+        CreateReceiptDto: {
+            /** @example 1000.00 */
+            amount?: string;
+            /** @enum {string} */
+            paymentMethod: "cash" | "online" | "card" | "other";
+            /** Format: uuid */
+            appointmentId?: string | null;
+            notes?: string | null;
+        };
+        ReceiptDetailDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description Quotable receipt number.
+             * @example RCP-2026-0001
+             */
+            number: string;
+            /** Format: uuid */
+            patientId: string;
+            /** Format: uuid */
+            appointmentId: string | null;
+            /** @example 1000.00 */
+            amount: string;
+            /** @enum {string} */
+            paymentMethod: "cash" | "online" | "card" | "other";
+            notes: string | null;
+            issuedAt: string;
         };
     };
     responses: never;
@@ -1037,6 +1427,159 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ServiceDto"][];
                 };
+            };
+        };
+    };
+    PatientsController_search: {
+        parameters: {
+            query?: {
+                /** @description Matches patient name, phone or email */
+                search?: string;
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPatientsDto"];
+                };
+            };
+        };
+    };
+    PatientsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePatientDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDetailDto"];
+                };
+            };
+            /** @description PATIENT_PHONE_TAKEN */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PatientsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDetailDto"];
+                };
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PatientsController_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PatientsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePatientDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDetailDto"];
+                };
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description PATIENT_PHONE_TAKEN */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1376,6 +1919,291 @@ export interface operations {
             };
             /** @description APPOINTMENT_NOT_CANCELLABLE */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FollowUpsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFollowUpDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowUpResponseDto"];
+                };
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description FOLLOW_UP_DATE_IN_PAST */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    FollowUpsController_list: {
+        parameters: {
+            query?: {
+                status?: "scheduled" | "reminder_sent" | "rebooked" | "dismissed";
+                dueBefore?: string;
+                page?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedFollowUpsDto"];
+                };
+            };
+        };
+    };
+    FollowUpsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFollowUpDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FollowUpResponseDto"];
+                };
+            };
+            /** @description FOLLOW_UP_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description FOLLOW_UP_DATE_IN_PAST */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PrescriptionsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePrescriptionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrescriptionDetailDto"];
+                };
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PrescriptionsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrescriptionDetailDto"];
+                };
+            };
+            /** @description DOCUMENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    PrescriptionsController_getPdfUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedFileUrlResponseDto"];
+                };
+            };
+            /** @description DOCUMENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReceiptsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateReceiptDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptDetailDto"];
+                };
+            };
+            /** @description PATIENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description RECEIPT_AMOUNT_INVALID */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReceiptsController_getById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiptDetailDto"];
+                };
+            };
+            /** @description DOCUMENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ReceiptsController_getPdfUrl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignedFileUrlResponseDto"];
+                };
+            };
+            /** @description DOCUMENT_NOT_FOUND */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

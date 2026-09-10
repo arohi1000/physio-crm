@@ -3,11 +3,14 @@ export function Pagination({
   totalPages,
   total,
   onPageChange,
+  itemLabel = "appointment",
 }: {
   page: number;
   totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
+  /** What `total` counts — defaults to the appointments table's original copy. */
+  itemLabel?: string;
 }) {
   if (total === 0) {
     return null;
@@ -16,7 +19,8 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between gap-4">
       <p className="text-ink-soft text-xs">
-        Page {page} of {totalPages} &middot; {total} appointment{total === 1 ? "" : "s"}
+        Page {page} of {totalPages} &middot; {total} {itemLabel}
+        {total === 1 ? "" : "s"}
       </p>
       <div className="flex gap-2">
         <button
