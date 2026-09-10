@@ -62,11 +62,21 @@ export async function apiRequest<TResponse>(
   }
 
   if (!response.ok) {
-    throw new ApiError(
-      "http",
-      `${method} ${path} failed with ${response.status} ${response.statusText}.`,
-      response.status,
-    );
+    // The M1 exception filter always sends the stable-code envelope
+    // (M2-CONTRACT.md §1: `{ statusCode, code, message, error }`). Reading it
+    // here, once, is what lets every caller branch on `error.code` instead of
+    // guessing at `message` text — a 204/empty error body just falls back to
+    // the status-line message below.
+    const errorBody = await response
+      .clone()
+      .json()
+      .catch(() => undefined);
+    const code = typeof errorBody?.code === "string" ? errorBody.code : undefined;
+    const message =
+      typeof errorBody?.message === "string"
+        ? errorBody.message
+        : `${method} ${path} failed with ${response.status} ${response.statusText}.`;
+    throw new ApiError("http", message, response.status, code);
   }
 
   // 204 is a documented success shape in the auth contract (logout), not a
