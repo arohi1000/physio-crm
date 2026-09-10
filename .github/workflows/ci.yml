@@ -22,6 +22,16 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # The committed types under lib/api/generated are the API contract. The
+      # spec lives in a sibling repo CI never checks out, so this fetches the
+      # published copy and fails if what is committed has drifted from it —
+      # otherwise a contract change lands silently and only breaks at runtime.
+      - name: Check generated API types match the published contract
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/arohi1000/physio-api/main/openapi.json -o "$RUNNER_TEMP/openapi.json"
+          OPENAPI_SPEC_PATH="$RUNNER_TEMP/openapi.json" npm run generate:api-types
+          git diff --exit-code lib/api/generated
+
       - name: Typecheck
         run: npm run typecheck
 

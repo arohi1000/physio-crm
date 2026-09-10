@@ -41,5 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# generated from physio-api's openapi.json — run `npm run generate:api-types`
-/lib/api/generated/
+# Types generated from physio-api's openapi.json ARE committed. They are a
+# contract artifact, not a build output: the spec lives in a sibling repo that
+# CI never checks out, so nothing here could regenerate them. Committing keeps
+# contract changes visible in review, and CI diffs them against the published
+# spec so a stale copy fails the build.
