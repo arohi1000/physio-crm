@@ -88,10 +88,16 @@ export function PatientRecordView({ patientId }: { patientId: string }) {
           </div>
         </div>
 
+        {/*
+          Prescriptions and receipts are deferred to Phase 2 (PRD.md §6), so
+          their buttons are not offered. The dialogs, their API clients and the
+          endpoints behind them all remain — the API returns 404 for both while
+          the feature flags are off, so this is presentation, not the control.
+          Existing prescriptions and receipts still render in the timeline
+          below; the patient's history is not rewritten because scope changed.
+        */}
         <div className="flex flex-wrap gap-2">
           <Button onClick={() => setActiveDialog("follow-up")}>Log follow-up</Button>
-          <Button onClick={() => setActiveDialog("prescription")}>New prescription</Button>
-          <Button onClick={() => setActiveDialog("receipt")}>New receipt</Button>
         </div>
 
         <div>

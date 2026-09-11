@@ -13,10 +13,23 @@ Repo 2 of 3. See `../Clinic_Demo/physio-crm-PLAN.md` for the full build plan and
 `../Clinic_Demo/EXECUTION-PLAN.md` §4 for the code standards this repo is
 reviewed against.
 
-**Status: Milestone 1 (Auth and shell).** Sign-in, session handling and
-role-aware navigation are built. There is still no calendar and no patient
-management — every route under `app/(app)/` is a placeholder that names what
-will live there and which milestone builds it.
+**Status: Milestone 3 complete.** Sign-in, the calendar with availability
+blocking, appointments, the patient list and record with its merged history
+timeline, follow-ups and working hours are all built against the real API.
+Messages, Reviews, Coupons, Users, Activity log and the content pages are still
+placeholders.
+
+**Phase 1 scope was trimmed on 2026-09-12** — see `../Clinic_Demo/PRD.md`. For
+this repo: **Coupons, Reviews and Users come off the navigation** (Phase 2), and
+so do the prescription and receipt actions on the patient record. The message
+template editor narrows to the follow-up reminder type.
+
+**Phase 1 has exactly one role**, `doctor_admin`. The role-gating logic stays
+in place — it is what makes adding staff in Phase 2 a configuration change
+rather than a rebuild — it simply has nothing to gate for now.
+
+Nothing is deleted. Deferred pages stay in the repo, disconnected at the
+navigation and route level, per `../Clinic_Demo/TRD.md` §9.
 
 ---
 

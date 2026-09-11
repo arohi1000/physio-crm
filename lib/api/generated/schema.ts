@@ -220,26 +220,6 @@ export interface paths {
         patch: operations["PatientsController_update"];
         trace?: never;
     };
-    "/api/v1/coupons/validate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Preview a coupon against a service price
-         * @description Read-only — never increments used_count.
-         */
-        post: operations["CouponsController_validate"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/availability": {
         parameters: {
             query?: never;
@@ -776,26 +756,6 @@ export interface components {
             gender?: "female" | "male" | "other" | null;
             notes?: string | null;
             consentGiven?: boolean;
-        };
-        ValidateCouponDto: {
-            /** @example WELCOME10 */
-            code: string;
-            /** Format: uuid */
-            serviceId: string;
-        };
-        CouponPreviewResponseDto: {
-            /** @example WELCOME10 */
-            code: string;
-            /** @enum {string} */
-            valueType: "percent" | "fixed";
-            /** @example 10.00 */
-            value: string;
-            /** @example 1000.00 */
-            originalPrice: string;
-            /** @example 100.00 */
-            discountAmount: string;
-            /** @example 900.00 */
-            finalPrice: string;
         };
         SlotDto: {
             /** @example 2026-03-05T04:30:00.000Z */
@@ -1580,29 +1540,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-        };
-    };
-    CouponsController_validate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ValidateCouponDto"];
-            };
-        };
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["CouponPreviewResponseDto"];
-                };
             };
         };
     };
